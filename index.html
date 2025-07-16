@@ -152,28 +152,16 @@
         import { getFirestore, doc, collection, addDoc, setDoc, deleteDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase Configuration ---
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "firebase/app";
-        import { getAnalytics } from "firebase/analytics";
-        // TODO: Add SDKs for Firebase products that you want to use
-        // https://firebase.google.com/docs/web/setup#available-libraries
-
-        // Your web app's Firebase configuration
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        // This is your specific Firebase configuration.
         const firebaseConfig = {
-        apiKey: "AIzaSyA1weS0lU8awZeRIFVBvSH1HiO_Mg4pqko",
-        authDomain: "my-scholarship-tracker-855c2.firebaseapp.com",
-        projectId: "my-scholarship-tracker-855c2",
-        storageBucket: "my-scholarship-tracker-855c2.firebasestorage.app",
-        messagingSenderId: "249731094696",
-        appId: "1:249731094696:web:b7366befe02c2228b18a9d",
-        measurementId: "G-CEN5LJ77TJ"
+            apiKey: "AIzaSyA1weS0lU8awZeRIFVBvSH1HiO_Mg4pqko",
+            authDomain: "my-scholarship-tracker-855c2.firebaseapp.com",
+            projectId: "my-scholarship-tracker-855c2",
+            storageBucket: "my-scholarship-tracker-855c2.appspot.com",
+            messagingSenderId: "249731094696",
+            appId: "1:249731094696:web:b7366befe02c2228b18a9d",
+            measurementId: "G-CEN5LJ77TJ"
         };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         // --- Initialize Firebase ---
         const app = initializeApp(firebaseConfig);
@@ -206,14 +194,12 @@
                 console.log("User is authenticated with UID:", userId);
                 userIdDisplay.textContent = `User ID: ${userId}`;
             } else {
+                // For a standalone app, you'd typically have a login flow.
+                // For this example, we'll continue to sign in anonymously.
                 try {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
+                    await signInAnonymously(auth);
                 } catch (error) {
-                    console.error("Error during sign-in:", error);
+                    console.error("Error during anonymous sign-in:", error);
                     userIdDisplay.textContent = "Could not authenticate. Please refresh.";
                 }
             }
@@ -224,7 +210,8 @@
         // --- Firestore Collection ---
         const getScholarshipsCollection = () => {
             if (!userId) return null;
-            return collection(db, `artifacts/${appId}/users/${userId}/scholarships`);
+            // Simplified path for a standalone project
+            return collection(db, `users/${userId}/scholarships`);
         }
 
         // --- Functions ---
@@ -300,7 +287,7 @@
 
             try {
                 if (id) {
-                    await setDoc(doc(db, `artifacts/${appId}/users/${userId}/scholarships`, id), scholarshipData, { merge: true });
+                    await setDoc(doc(db, `users/${userId}/scholarships`, id), scholarshipData, { merge: true });
                 } else {
                     await addDoc(getScholarshipsCollection(), scholarshipData);
                 }
@@ -359,7 +346,7 @@
         confirmDelete.onclick = async () => {
             if (scholarshipToDeleteId && userId) {
                 try {
-                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/scholarships`, scholarshipToDeleteId));
+                    await deleteDoc(doc(db, `users/${userId}/scholarships`, scholarshipToDeleteId));
                 } catch (error) {
                     console.error("Error deleting document: ", error);
                 } finally {
