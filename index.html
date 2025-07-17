@@ -148,11 +148,12 @@
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, collection, addDoc, setDoc, deleteDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase Configuration ---
-        // This is your specific Firebase configuration.
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
         const firebaseConfig = {
             apiKey: "AIzaSyA1weS0lU8awZeRIFVBvSH1HiO_Mg4pqko",
             authDomain: "my-scholarship-tracker-855c2.firebaseapp.com",
@@ -194,8 +195,6 @@
                 console.log("User is authenticated with UID:", userId);
                 userIdDisplay.textContent = `User ID: ${userId}`;
             } else {
-                // For a standalone app, you'd typically have a login flow.
-                // For this example, we'll continue to sign in anonymously.
                 try {
                     await signInAnonymously(auth);
                 } catch (error) {
@@ -210,7 +209,6 @@
         // --- Firestore Collection ---
         const getScholarshipsCollection = () => {
             if (!userId) return null;
-            // Simplified path for a standalone project
             return collection(db, `users/${userId}/scholarships`);
         }
 
@@ -395,7 +393,7 @@ Text to analyze: """${text}"""`;
                 },
             };
 
-            const apiKey = ""; // Leave empty
+            const apiKey = firebaseConfig.apiKey; // Use the key from your Firebase config
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
             const payload = {
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -412,9 +410,14 @@ Text to analyze: """${text}"""`;
                     body: JSON.stringify(payload)
                 });
                 
+                if (!response.ok) {
+                    // If the response is not OK, throw an error with the status
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+
                 const result = await response.json();
                 
-                if (result.candidates && result.candidates[0].content.parts[0].text) {
+                if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts[0].text) {
                     const extractedData = JSON.parse(result.candidates[0].content.parts[0].text);
                     document.getElementById('scholarship-name').value = extractedData.scholarshipName || '';
                     document.getElementById('company-name').value = extractedData.companyName || '';
@@ -422,12 +425,13 @@ Text to analyze: """${text}"""`;
                     document.getElementById('requirements').value = extractedData.requirements || '';
                     document.getElementById('email').value = extractedData.email || '';
                 } else {
-                    throw new Error("Could not parse data from AI response.");
+                    // This case handles situations where the response is OK but doesn't have the expected content.
+                    throw new Error("Could not parse data from AI response. The response format was unexpected.");
                 }
 
             } catch (error) {
                 console.error("Error with AI auto-fill:", error);
-                alert("Sorry, there was an error analyzing the text. Please try again.");
+                alert("Sorry, there was an error analyzing the text. Please try again. Check the console for more details.");
             } finally {
                 spinner.style.display = 'none';
                 btnText.textContent = 'Auto-fill From Text';
